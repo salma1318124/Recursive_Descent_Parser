@@ -4,7 +4,6 @@
 
 using namespace std;
 
-// Constructor
 Parser::Parser(vector<Token> tokenList) {
     tokens = tokenList;
     position = 0;
@@ -15,7 +14,6 @@ Parser::Parser(vector<Token> tokenList) {
     }
 }
 
-// Move to next token
 void Parser::nextToken() {
     if (position < tokens.size() - 1) {
         position++;
@@ -23,7 +21,6 @@ void Parser::nextToken() {
     }
 }
 
-// Get token name as string
 string Parser::tokenName(TokenType type) {
     if (type == KEYWORD_IF) return "if";
     if (type == KEYWORD_ELSE) return "else";
@@ -56,7 +53,6 @@ string Parser::tokenName(TokenType type) {
     return "unknown";
 }
 
-// Match current token with expected
 void Parser::eat(TokenType expected) {
     if (current.type == expected) {
         nextToken();
@@ -65,7 +61,6 @@ void Parser::eat(TokenType expected) {
     }
 }
 
-// Print error and exit
 void Parser::error(string expected) {
     cout << "\nSYNTAX ERROR at line " << current.line 
          << ", column " << current.column << endl;
@@ -75,7 +70,6 @@ void Parser::error(string expected) {
     exit(1);
 }
 
-// Main parse function
 void Parser::parse() {
     program();
     
@@ -88,7 +82,6 @@ void Parser::parse() {
     }
 }
 
-// program → Program ID { declaration-list statement-list }
 void Parser::program() {
     eat(KEYWORD_PROGRAM);
     eat(ID);
@@ -98,33 +91,27 @@ void Parser::program() {
     eat(SYM_RBRACE);
 }
 
-// declaration-list -> declaration declaration-list^
 void Parser::declarationList() {
     declaration();
     declarationListPrime();
 }
 
-// declaration-list^ -> declaration declaration-list^ | ε
 void Parser::declarationListPrime() {
-    // If next token is int or float, we have another declaration
     if (current.type == KEYWORD_INT || current.type == KEYWORD_FLOAT) {
         declaration();
         declarationListPrime();
     }
-    // Otherwise done with declarations
+ 
 }
 
-// declaration → var-declaration
 void Parser::declaration() {
     varDeclaration();
 }
 
-// var-declaration → type-specifier ID ; | type-specifier ID [ NUM ] ;
 void Parser::varDeclaration() {
     typeSpecifier();
     eat(ID);
     
-    // Check if array
     if (current.type == SYM_LBRACKET) {
         eat(SYM_LBRACKET);
         eat(NUM);
@@ -134,7 +121,6 @@ void Parser::varDeclaration() {
     eat(SYM_SEMICOLON);
 }
 
-// type-specifier → int | float
 void Parser::typeSpecifier() {
     if (current.type == KEYWORD_INT) {
         eat(KEYWORD_INT);
@@ -145,36 +131,29 @@ void Parser::typeSpecifier() {
     }
 }
 
-// compound-stmt → { statement-list }
 void Parser::compoundStmt() {
     eat(SYM_LBRACE);
     statementList();
     eat(SYM_RBRACE);
 }
 
-// statement-list -> ε | statement statement-list^
 void Parser::statementList() {
-    // Check if there is a statement
     if (current.type == ID || current.type == SYM_LBRACE ||
         current.type == KEYWORD_IF || current.type == KEYWORD_WHILE) {
         statement();
         statementListPrime();
     }
-    // Otherwise empty list
+    
 }
 
-// statement-list^ -> statement statement-list^ | ε
 void Parser::statementListPrime() {
-    // Keep parsing statements
     if (current.type == ID || current.type == SYM_LBRACE ||
         current.type == KEYWORD_IF || current.type == KEYWORD_WHILE) {
         statement();
         statementListPrime();
     }
-    // Otherwise done
 }
 
-// statement → assignment-stmt | compound-stmt | selection-stmt | iteration-stmt
 void Parser::statement() {
     if (current.type == ID) {
         assignmentStmt();
@@ -189,7 +168,6 @@ void Parser::statement() {
     }
 }
 
-// selection-stmt -> if (expression) statement selection-stmt^
 void Parser::selectionStmt() {
     eat(KEYWORD_IF);
     eat(SYM_LPAREN);
@@ -199,17 +177,13 @@ void Parser::selectionStmt() {
     selectionStmtPrime();
 }
 
-// selection-stmt^ -> ε | else statement
 void Parser::selectionStmtPrime() {
-    // Check for else
     if (current.type == KEYWORD_ELSE) {
         eat(KEYWORD_ELSE);
         statement();
     }
-    // Otherwise no else
 }
 
-// iteration-stmt → while ( expression ) statement
 void Parser::iterationStmt() {
     eat(KEYWORD_WHILE);
     eat(SYM_LPAREN);
@@ -218,18 +192,15 @@ void Parser::iterationStmt() {
     statement();
 }
 
-// assignment-stmt → var = expression
 void Parser::assignmentStmt() {
     var();
     eat(OP_ASSIGN);
     expression();
 }
 
-// var → ID | ID [ expression ]
 void Parser::var() {
     eat(ID);
     
-    // Check for array access
     if (current.type == SYM_LBRACKET) {
         eat(SYM_LBRACKET);
         expression();
@@ -237,15 +208,12 @@ void Parser::var() {
     }
 }
 
-// expression -> additive-expression expression^
 void Parser::expression() {
     additiveExpression();
     expressionPrime();
 }
 
-// expression^ -> relop additive-expression expression^ | ε
 void Parser::expressionPrime() {
-    // Check for relational operator
     if (current.type == OP_LT || current.type == OP_LE ||
         current.type == OP_GT || current.type == OP_GE ||
         current.type == OP_EQ || current.type == OP_NE) {
@@ -253,10 +221,8 @@ void Parser::expressionPrime() {
         additiveExpression();
         expressionPrime();
     }
-    // Otherwise done
 }
 
-// relop → < | ≤ | > | ≥ | == | !=
 void Parser::relop() {
     if (current.type == OP_LT) {
         eat(OP_LT);
@@ -275,24 +241,19 @@ void Parser::relop() {
     }
 }
 
-// additive-expression -> term additive-expression^
 void Parser::additiveExpression() {
     term();
     additiveExpressionPrime();
 }
 
-// additive-expression^ -> addop term additive-expression^ | ε
 void Parser::additiveExpressionPrime() {
-    // Check for + or -
     if (current.type == OP_PLUS || current.type == OP_MINUS) {
         addop();
         term();
         additiveExpressionPrime();
     }
-    // Otherwise done
 }
 
-// addop → + | -
 void Parser::addop() {
     if (current.type == OP_PLUS) {
         eat(OP_PLUS);
@@ -303,24 +264,19 @@ void Parser::addop() {
     }
 }
 
-// term -> factor term^
 void Parser::term() {
     factor();
     termPrime();
 }
 
-// term^ -> mulop factor term^ | ε
 void Parser::termPrime() {
-    // Check for * or /
     if (current.type == OP_MULT || current.type == OP_DIV) {
         mulop();
         factor();
         termPrime();
     }
-    // Otherwise done
 }
 
-// mulop → * | /
 void Parser::mulop() {
     if (current.type == OP_MULT) {
         eat(OP_MULT);
@@ -331,7 +287,6 @@ void Parser::mulop() {
     }
 }
 
-// factor → ( expression ) | var | NUM
 void Parser::factor() {
     if (current.type == SYM_LPAREN) {
         eat(SYM_LPAREN);
