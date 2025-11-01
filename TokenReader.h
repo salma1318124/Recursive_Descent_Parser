@@ -10,7 +10,6 @@ using namespace std;
 
 class TokenReader {
 private:
-    // Convert scanner token name to our token type
     TokenType getTokenType(string name) {
         if (name == "KEYWORD_IF") return KEYWORD_IF;
         if (name == "KEYWORD_ELSE") return KEYWORD_ELSE;
@@ -45,7 +44,6 @@ private:
     }
     
 public:
-    // Read tokens from scanner output file
     vector<Token> readFile(string filename) {
         vector<Token> tokens;
         ifstream file(filename.c_str());
@@ -57,43 +55,36 @@ public:
         
         string line;
         while (getline(file, line)) {
-            // Skip empty lines and errors
             if (line.empty() || line.find("ERROR") == 0) {
                 continue;
             }
             
-            // Only process token lines
             if (line.find("Token:") != 0) {
                 continue;
             }
             
             Token token;
             
-            // Extract token type
             int start = line.find(":") + 2;
             int end = line.find(",", start);
             string typeStr = line.substr(start, end - start);
             
-            // Remove trailing spaces
             while (typeStr.length() > 0 && typeStr[typeStr.length()-1] == ' ') {
                 typeStr = typeStr.substr(0, typeStr.length()-1);
             }
             
             token.type = getTokenType(typeStr);
             
-            // Skip if unknown token
             if (token.type == ERROR_TOKEN) {
                 continue;
             }
             
-            // Extract lexeme (between quotes)
             int quoteStart = line.find("'");
             int quoteEnd = line.find("'", quoteStart + 1);
             if (quoteStart >= 0 && quoteEnd >= 0) {
                 token.lexeme = line.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
             }
             
-            // Extract line number
             int linePos = line.find("Line:");
             if (linePos >= 0) {
                 string lineStr = line.substr(linePos + 6);
@@ -101,7 +92,6 @@ public:
                 ss >> token.line;
             }
             
-            // Extract column number
             int colPos = line.find("Col:");
             if (colPos >= 0) {
                 string colStr = line.substr(colPos + 5);
@@ -112,7 +102,6 @@ public:
             tokens.push_back(token);
         }
         
-        // Add end of file token
         Token eof;
         eof.type = END_OF_FILE;
         eof.lexeme = "";
